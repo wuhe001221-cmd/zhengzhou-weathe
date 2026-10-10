@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>郑州天气</title>
+  <style>
+    :root {
+      --ink: #1c2430;
+      --muted: #5b6778;
+      --soft: rgba(255, 255, 255, 0.58);
+      --line: rgba(255, 255, 255, 0.42);
+      --shadow: 0 24px 60px rgba(72, 88, 118, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 700px at 12% -10%, rgba(255, 236, 210, 0.9), transparent 58%),
+        radial-gradient(900px 620px at 108% 8%, rgba(186, 214, 240, 0.75), transparent 52%),
+        radial-gradient(800px 500px at 50% 110%, rgba(232, 214, 186, 0.55), transparent 50%),
+        linear-gradient(165deg, #eef4fb 0%, #f6efe6 48%, #e8f0f4 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 18px;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      border-radius: 50%;
+      filter: blur(2px);
+    }
+
+    body::before {
+      width: 42vw;
+      height: 22vw;
+      min-width: 280px;
+      min-height: 140px;
+      left: -8vw;
+      top: 8vh;
+      background: rgba(255, 255, 255, 0.45);
+      transform: rotate(-8deg);
+    }
+
+    body::after {
+      width: 36vw;
+      height: 16vw;
+      min-width: 240px;
+      right: -6vw;
+      top: 18vh;
+      background: rgba(255, 255, 255, 0.35);
+      transform: rotate(12deg);
+    }
+
+    .app {
+      width: 100%;
+      max-width: 560px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card {
+      background: var(--soft);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 36px 32px 28px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 28px;
+    }
+
+    .place {
+      font-size: 15px;
+      letter-spacing: 0.28em;
+      color: var(--muted);
+      text-transform: none;
+    }
+
+    .city {
+      margin-top: 8px;
+      font-size: 36px;
+      font-weight: 560;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+    }
+
+    .date {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .refresh {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.45);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .refresh:hover {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .temp {
+      font-size: 88px;
+      font-weight: 300;
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+    }
+
+    .temp span {
+      font-size: 36px;
+      vertical-align: super;
+      margin-left: 2px;
+    }
+
+    .condition {
+      text-align: right;
+    }
+
+    .icon {
+      font-size: 48px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .desc {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .range {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 16px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .stat label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat b {
+      font-size: 16px;
+      font-weight: 560;
+    }
+
+    .forecast-title {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      margin-bottom: 12px;
+    }
+
+    .forecast {
+      display: grid;
+      gap: 6px;
+    }
+
+    .day {
+      display: grid;
+      grid-template-columns: 72px 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 8px;
+      border-radius: 12px;
+    }
+
+    .day:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .day .name {
+      font-size: 14px;
+    }
+
+    .day .wx {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .day .hi {
+      font-size: 15px;
+      font-weight: 560;
+      min-width: 42px;
+      text-align: right;
+    }
+
+    .day .lo {
+      font-size: 14px;
+      color: var(--muted);
+      min-width: 42px;
+      text-align: right;
+    }
+
+    .status {
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .footnote {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 12px;
+      color: #8b95a3;
+    }
+
+    @media (max-width: 520px) {
+      .card {
+        padding: 28px 20px 22px;
+        border-radius: 22px;
+      }
+
+      .city {
+        font-size: 30px;
+      }
+
+      .temp {
+        font-size: 68px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="card" id="panel">
+      <p class="status" id="status">正在获取郑州天气…</p>
+    </section>
+    <p class="footnote">数据来源 Open-Meteo · 郑州 金水区附近</p>
+  </main>
+
+  <script>
+    const LAT = 34.7466;
+    const LON = 113.6253;
+    const API =
+      "https://api.open-meteo.com/v1/forecast" +
+      "?latitude=" + LAT +
+      "&longitude=" + LON +
+      "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m" +
+      "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" +
+      "&timezone=Asia%2FShanghai&forecast_days=7";
+
+    const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+    function weatherFromCode(code) {
+      if (code === 0) return { text: "晴朗", icon: "☀" };
+      if (code === 1) return { text: "大部晴朗", icon: "🌤" };
+      if (code === 2) return { text: "多云", icon: "⛅" };
+      if (code === 3) return { text: "阴天", icon: "☁" };
+      if (code === 45 || code === 48) return { text: "雾", icon: "🌫" };
+      if (code >= 51 && code <= 57) return { text: "毛毛雨", icon: "🌦" };
+      if (code >= 61 && code <= 67) return { text: "雨", icon: "🌧" };
+      if (code >= 71 && code <= 77) return { text: "雪", icon: "❄" };
+      if (code >= 80 && code <= 82) return { text: "阵雨", icon: "🌦" };
+      if (code >= 85 && code <= 86) return { text: "阵雪", icon: "🌨" };
+      if (code >= 95) return { text: "雷雨", icon: "⛈" };
+      return { text: "天气变化", icon: "🌤" };
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso + "T12:00:00");
+      return d.getMonth() + 1 + "月" + d.getDate() + "日";
+    }
+
+    function weekdayLabel(iso, index) {
+      if (index === 0) return "今天";
+      if (index === 1) return "明天";
+      const d = new Date(iso + "T12:00:00");
+      return WEEKDAYS[d.getDay()];
+    }
+
+    function round(n) {
+      return Math.round(n);
+    }
+
+    function render(data) {
+      const current = data.current;
+      const daily = data.daily;
+      const wx = weatherFromCode(current.weather_code);
+      const now = new Date();
+      const dateText =
+        now.getFullYear() + "年" +
+        (now.getMonth() + 1) + "月" +
+        now.getDate() + "日  " +
+        WEEKDAYS[now.getDay()];
+
+      const days = daily.time.map((iso, i) => {
+        const dwx = weatherFromCode(daily.weather_code[i]);
+        return (
+          '<div class="day">' +
+            '<span class="name">' + weekdayLabel(iso, i) + "</span>" +
+            '<span class="wx">' + dwx.icon + " " + dwx.text + "</span>" +
+            '<span class="hi">' + round(daily.temperature_2m_max[i]) + "°</span>" +
+            '<span class="lo">' + round(daily.temperature_2m_min[i]) + "°</span>" +
+          "</div>"
+        );
+      }).join("");
+
+      document.getElementById("panel").innerHTML =
+        "<header>" +
+          "<div>" +
+            '<p class="place">HENAN · ZHENGZHOU</p>' +
+            '<h1 class="city">郑州</h1>' +
+            '<p class="date">' + dateText + "</p>" +
+          "</div>" +
+          '<button class="refresh" type="button" id="refresh">刷新</button>' +
+        "</header>" +
+        '<div class="hero">' +
+          '<div class="temp">' + round(current.temperature_2m) + "<span>°</span></div>" +
+          '<div class="condition">' +
+            '<div class="icon">' + wx.icon + "</div>" +
+            '<div class="desc">' + wx.text + "</div>" +
+            '<div class="range">体感 ' + round(current.apparent_temperature) +
+            "° · 今 " + round(daily.temperature_2m_min[0]) +
+            "° / " + round(daily.temperature_2m_max[0]) + "°</div>" +
+          "</div>" +
+        "</div>" +
+        '<div class="stats">' +
+          "<div class=\"stat\"><label>湿度</label><b>" + current.relative_humidity_2m + "%</b></div>" +
+          "<div class=\"stat\"><label>风速</label><b>" + round(current.wind_speed_10m) + " km/h</b></div>" +
+          "<div class=\"stat\"><label>降水概率</label><b>" + (daily.precipitation_probability_max[0] ?? 0) + "%</b></div>" +
+        "</div>" +
+        '<p class="forecast-title">未来七日</p>' +
+        '<div class="forecast">' + days + "</div>";
+
+      document.getElementById("refresh").addEventListener("click", load);
+    }
+
+    async function load() {
+      const panel = document.getElementById("panel");
+      panel.innerHTML = '<p class="status">正在获取郑州天气…</p>';
+      try {
+        const res = await fetch(API);
+        if (!res.ok) throw new Error("network");
+        const data = await res.json();
+        render(data);
+      } catch (err) {
+        panel.innerHTML =
+          '<p class="status">暂时无法获取天气，请检查网络后刷新。</p>' +
+          '<div style="text-align:center;padding-bottom:8px">' +
+          '<button class="refresh" type="button" id="retry">重试</button></div>';
+        document.getElementById("retry").addEventListener("click", load);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
